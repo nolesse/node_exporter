@@ -25,6 +25,8 @@ RUN apk add --no-cache libc6-compat util-linux
 COPY --from=builder /app/node_exporter /bin/node_exporter
 # 从构建阶段拷贝Delve调试工具到运行时容器
 COPY --from=builder /go/bin/dlv .
+# 从构建阶段拷贝自定义脚本到运行时容器指定路径
+COPY --from=builder /app/cmd/shell /bin/shell
 # 赋予node_exporter二进制文件可执行权限
 RUN chmod +x /bin/node_exporter
 # 暴露node_exporter的默认端口 9100
@@ -34,4 +36,4 @@ EXPOSE 2345
 # 指定运行时的用户为root
 USER root
 # 设置容器启动时的默认命令，使用Delve调试器启动node_exporter
-CMD ["./dlv", "exec", "/bin/node_exporter","--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient"]
+CMD ["./dlv", "exec", "/bin/node_exporter","--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "--", "--collector.shellfile.directory=/bin/shell"]
