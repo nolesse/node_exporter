@@ -3,6 +3,7 @@
 package collector
 
 import (
+	"context"
 	"fmt"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/common/expfmt"
@@ -11,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/go-kit/log"
@@ -19,6 +21,7 @@ import (
 )
 
 var (
+	shellFileTimeout   = kingpin.Flag("collector.shellfile.timeout", "The maximum timeout for shell file execution.").Default("20").Int64()
 	shellFileDirectory = kingpin.Flag("collector.shellfile.directory", "Directory to execute shell files with output metrics.").Default("").String()
 	shellFileMtimeDesc = prometheus.NewDesc(
 		"node_shellfile_mtime_seconds",
@@ -57,7 +60,9 @@ func (c *shellFileCollector) Update(ch chan<- prometheus.Metric) error {
 		paths = []string{c.path}
 	}
 
-	mtimes := make(map[string]time.Duration)
+	var mtimes sync.Map
+	var lock sync.Mutex
+	var wg sync.WaitGroup
 	for _, path := range paths {
 		files, err := os.ReadDir(path)
 		if err != nil && path != "" {
@@ -69,16 +74,31 @@ func (c *shellFileCollector) Update(ch chan<- prometheus.Metric) error {
 			if !strings.HasSuffix(f.Name(), ".sh") {
 				continue
 			}
-			mtime, err := c.execShellFile(path, f.Name(), ch)
-			if err != nil {
-				errVal++
-				level.Error(c.logger).Log("msg", "failed to collect shellfile data", "file", f.Name(), "err", err)
-				continue
-			}
-			mtimes[filepath.Join(path, f.Name())] = mtime
+
+			wg.Add(1)
+			go func(fileName string) {
+				defer func() {
+					wg.Done()
+					if r := recover(); r != nil {
+						fmt.Println("Recovered from panic:", r)
+					}
+				}()
+
+				mtime, err := c.execShellFile(path, fileName, ch)
+				if err != nil {
+					lock.Lock()
+					defer lock.Unlock()
+					errVal++
+					level.Error(c.logger).Log("msg", "failed to collect shellfile data", "file", fileName, "err", err)
+					return
+				}
+				mtimes.Store(filepath.Join(path, fileName), mtime)
+			}(f.Name())
 		}
 	}
-	c.exportMTimes(mtimes, ch)
+
+	wg.Wait()
+	c.exportMTimes(&mtimes, ch)
 
 	ch <- prometheus.MustNewConstMetric(
 		prometheus.NewDesc(
@@ -91,31 +111,30 @@ func (c *shellFileCollector) Update(ch chan<- prometheus.Metric) error {
 	return nil
 }
 
-func (c *shellFileCollector) exportMTimes(mtimes map[string]time.Duration, ch chan<- prometheus.Metric) {
-	if len(mtimes) == 0 {
-		return
-	}
-
-	filepaths := make([]string, 0, len(mtimes))
-	for path := range mtimes {
-		filepaths = append(filepaths, path)
-	}
+func (c *shellFileCollector) exportMTimes(mtimes *sync.Map, ch chan<- prometheus.Metric) {
+	var filepaths []string
+	mtimes.Range(func(key, value interface{}) bool {
+		filepaths = append(filepaths, fmt.Sprint(key))
+		return true
+	})
 	sort.Strings(filepaths)
 
 	for _, path := range filepaths {
-		mtime := float64(mtimes[path])
-		if c.mtime != nil {
-			mtime = *c.mtime
+		if mtime, ok := mtimes.Load(path); ok {
+			if duration, ok := mtime.(time.Duration); ok {
+				ch <- prometheus.MustNewConstMetric(shellFileMtimeDesc, prometheus.GaugeValue, float64(duration), path)
+			}
 		}
-		ch <- prometheus.MustNewConstMetric(shellFileMtimeDesc, prometheus.GaugeValue, mtime, path)
 	}
 }
 
 func (c *shellFileCollector) execShellFile(dir, name string, ch chan<- prometheus.Metric) (mtime time.Duration, err error) {
 	start := time.Now()
 	path := filepath.Join(dir, name)
-	cmd := exec.Command("/bin/sh", path)
-	output, err := cmd.Output()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(*shellFileTimeout)*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "/bin/sh", path)
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return
 	}
