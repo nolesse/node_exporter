@@ -32,7 +32,7 @@
 
 **已支持的自定义指标**
 
-| 名称                       | help                                      | 含义      | 来源    |
-|--------------------------|-------------------------------------------|---------|-------|
-| node_cpu_physical_cores  | Number of physical CPU cores on the node. | cpu物理核数 | lscpu |
-| node_cpu_frequency_hertz | Current frequency of the CPU in hertz.    | cpu主频   | lscpu |
+| 名称                       | help                                      | 含义      | 来源     |
+|--------------------------|-------------------------------------------|---------|--------|
+| node_cpu_physical_cores  | Number of physical CPU cores on the node. | cpu物理核数 | lscpu  |
+| node_cpu_frequency_hertz | Current frequency of the CPU in hertz.    | cpu主频   | lscpu/cat /proc/cpuinfo |
