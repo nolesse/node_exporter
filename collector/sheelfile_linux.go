@@ -33,7 +33,6 @@ var (
 
 type shellFileCollector struct {
 	path   string
-	mtime  *float64
 	logger log.Logger
 }
 
