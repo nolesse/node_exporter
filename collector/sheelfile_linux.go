@@ -79,7 +79,7 @@ func (c *shellFileCollector) Update(ch chan<- prometheus.Metric) error {
 				defer func() {
 					wg.Done()
 					if r := recover(); r != nil {
-						fmt.Println("Recovered from panic:", r)
+						level.Error(c.logger).Log("msg", "failed to collect shellfile data", "file", fileName, "err", r)
 					}
 				}()
 
