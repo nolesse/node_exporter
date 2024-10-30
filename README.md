@@ -1,13 +1,15 @@
-# Node Exporter   
+# Node Exporter
+
 *Node Exporter 二次开发与功能拓展*
 
 ---
 
 **基于 Docker 的本地调试流程**
+
 1. **进入 `./cmd` 目录，执行 `build.cmd` 命令**
 2. **配置调试环境**
-   - 打开 **Edit Configurations** 菜单
-   - 点击 **Add New Configuration**，选择 **Go Remote**
+    - 打开 **Edit Configurations** 菜单
+    - 点击 **Add New Configuration**，选择 **Go Remote**
 
    ![调试配置](img/debug.png)
 3. **启动 Debug 模式**  
@@ -26,13 +28,21 @@
    metric_name{label="value"} metric_value
 
 2. **上传脚本至目标主机**
-   - 启动 exporter 时，通过 `--collector.shellfile.directory=/xxxx` 指定脚本存放路径。
+    - 启动 exporter 时，通过 `--collector.shellfile.directory=/xxxx` 指定脚本存放路径。
 
 ---
 
 **已支持的自定义指标**
 
-| 名称                       | help                                      | 含义      | 来源     |
-|--------------------------|-------------------------------------------|---------|--------|
-| node_cpu_physical_cores  | Number of physical CPU cores on the node. | cpu物理核数 | lscpu  |
-| node_cpu_frequency_hertz | Current frequency of the CPU in hertz.    | cpu主频   | lscpu/cat /proc/cpuinfo |
+| 名称                       | help                                                | 含义              | 来源                        |
+|--------------------------|-----------------------------------------------------|-----------------|---------------------------|
+| node_cpu_physical_cores  | Number of physical CPU cores on the node.           | cpu物理核数         | lscpu                     |
+| node_cpu_frequency_hertz | Current frequency of the CPU in hertz.              | cpu主频           | lscpu 或 cat /proc/cpuinfo |
+| nfs_read_iops            | IOPS for read operations.                           | 读取操作的 IOPS      | nfsiostat                 |
+| nfs_read_rate            | Read rate in kB/s.                                  | 读取速率（kB/s）      | nfsiostat                 |
+| nfs_read_avg_rtt         | Average round trip time in ms for read operations.  | 读取操作的平均往返时间（ms） | nfsiostat                 |
+| nfs_read_avg_exe         | Average execution time in ms for read operations.   | 读取操作的平均执行时间（ms） | nfsiostat                 |
+| nfs_write_iops           | IOPS for write operations.                          | 写入操作的 IOPS      | nfsiostat                 |
+| nfs_write_rate           | Write rate in kB/s.                                 | 写入速率（kB/s）      | nfsiostat                 |
+| nfs_write_avg_rtt        | Average round trip time in ms for write operations. | 写入操作的平均往返时间（ms） | nfsiostat                 |
+| nfs_write_avg_exe        | Average execution time in ms for write operations.  | 写入操作的平均执行时间（ms） | nfsiostat                 |
