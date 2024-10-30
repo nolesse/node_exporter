@@ -14,3 +14,5 @@ set tag=%name%:v%aa%
 docker build -t %tag% -f Dockerfile .
 docker run -d --name node_exporter -p 9100:9100 -p 2345:2345 %tag%
 docker cp node_exporter:/bin/node_exporter ./cmd/node_exporter
+cd ./cmd
+tar -czvf "node_exporter.tar.gz" shell node_exporter install.sh
