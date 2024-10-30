@@ -10,10 +10,10 @@
    ```bash
    cd ./cmd
    ./build.cmd
-   
+
 2. **配置调试环境**
-   - 打开 **Edit Configurations** 菜单
-   - 点击 **Add New Configuration**，选择 **Go Remote**
+    - 打开 **Edit Configurations** 菜单
+    - 点击 **Add New Configuration**，选择 **Go Remote**
 
    ![调试配置](img/debug.png)
 
@@ -32,11 +32,11 @@
    ├── node_exporter
    └── install.sh
     ``` 
-   
+
 6. **执行 `install.sh` 安装服务**
    ```shell
    sh install.sh
-   
+
 7. **查看服务存活状态**
    ```shell
    systemctl status node-exporter
@@ -58,7 +58,16 @@
 
 ---
 
-**已支持的自定义指标**
+### metrics
+
+**shellfile收集器相关指标**
+
+| 名称                           | help                                               | 含义      | 
+|------------------------------|----------------------------------------------------|---------|
+| node_shellfile_mtime_seconds | Unixtime mtime of shellfiles successfully execute. | 执行脚本耗时  |  
+| node_shellfile_scrape_error  | Number of errors while executing shell files.      | 执行脚本出错数 | 
+
+**已支持的自定义业务指标**
 
 | 名称                       | help                                                | 含义              | 来源                        |
 |--------------------------|-----------------------------------------------------|-----------------|---------------------------|
