@@ -36,4 +36,4 @@ EXPOSE 2345
 # 指定运行时的用户为root
 USER root
 # 设置容器启动时的默认命令，使用Delve调试器启动node_exporter
-CMD ["./dlv", "exec", "/bin/node_exporter", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "--", "--collector.shellfile.directory=/bin/shell"]
+CMD ["/bin/dlv", "exec", "/bin/node_exporter", "--headless", "--listen=:2345", "--api-version=2", "--accept-multiclient", "--", "--collector.shellfile.directory=/bin/shell"]
