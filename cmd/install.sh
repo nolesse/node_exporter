@@ -1,8 +1,9 @@
 #!/bin/bash
 
 mkdir /usr/local/bin/node_exporter
-mv node_exporter /usr/local/bin/node_exporter
-mv shell /usr/local/bin/node_exporter
+mkdir /usr/local/bin/node_exporter/shell
+mv -f node_exporter /usr/local/bin/node_exporter
+mv -f shell/* /usr/local/bin/node_exporter/shell/
 
 chmod +x /usr/local/bin/node_exporter/*
 
@@ -24,7 +25,7 @@ EOF
 
 chmod 754 /usr/lib/systemd/system/node-exporter.service
 systemctl enable node-exporter.service
-
+systemctl stop node-exporter
 systemctl start node-exporter
 
 if [[ $? = 0 ]]; then
